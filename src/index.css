@@ -1,13 +1,22 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .btn {
+    @apply flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-xl h-10 px-4 text-sm font-bold leading-normal tracking-[0.015em] transition-all duration-200 ease-in-out;
+  }
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary/90 focus:ring-2 focus:ring-primary/50 focus:ring-offset-2;
+  }
+  .btn-secondary {
+    @apply bg-tertiary text-secondary hover:bg-tertiary/80 focus:ring-2 focus:ring-tertiary/50 focus:ring-offset-2;
+  }
+  .form-input {
+    @apply flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-secondary focus:outline-0 focus:ring-0 border border-tertiary bg-white focus:border-tertiary h-14 placeholder:text-quaternary p-[15px] text-base font-normal leading-normal;
+  }
+  .btn-confirm {
+    @apply btn btn-primary py-3 px-6 text-base shadow-md hover:shadow-lg transform hover:-translate-y-0.5 active:translate-y-0;
+  }
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
