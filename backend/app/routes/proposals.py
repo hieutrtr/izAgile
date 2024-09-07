@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query
 from ..schemas.proposal import ProposalCreate, ProposalResponse, PaginatedProposalResponse
-from ..services.proposal import generate_and_store_proposal, get_proposals_by_owner
+from ..services.proposal import generate_and_store_proposal, get_proposals_by_owner, get_proposal_by_id
 
 router = APIRouter()
 
@@ -31,5 +31,15 @@ async def list_proposals_by_owner(
             page=page,
             limit=limit
         )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/proposals/id/{id}", response_model=ProposalResponse)
+async def get_proposal(id: str):
+    try:
+        proposal = await get_proposal_by_id(id)
+        if proposal is None:
+            raise HTTPException(status_code=404, detail="Proposal not found")
+        return ProposalResponse(proposal=proposal)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

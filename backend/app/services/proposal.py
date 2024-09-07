@@ -4,7 +4,8 @@ from langchain_core.prompts import ChatPromptTemplate
 from ..config import settings
 from ..models.proposal import Proposal, ProposalInDB
 from ..db.mongodb import db
-from typing import List, Tuple
+from typing import List, Tuple, Optional
+from bson import ObjectId
 
 system_template = """You are an expert project manager with deep expertise in Agile methodologies, well-versed in modern technologies such as cloud computing, AI, data management, and software development. Your ability to scope projects ensures the team delivers safe, aligned, and high-quality results that meet the client's requirements. You are proactive, clear, and detail-oriented in ensuring that all client requirements are thoroughly understood and matched to project deliverables.
 
@@ -67,3 +68,13 @@ async def get_proposals_by_owner(owner: str, page: int, limit: int) -> Tuple[Lis
     
     total = await db.proposals.count_documents({"owner": owner})
     return proposals, total
+
+async def get_proposal_by_id(id: str) -> Optional[ProposalInDB]:
+    try:
+        proposal_dict = await db.proposals.find_one({"_id": ObjectId(id)})
+        if proposal_dict:
+            return ProposalInDB(**proposal_dict)
+        return None
+    except Exception as e:
+        print(f"Error retrieving proposal: {e}")
+        return None
