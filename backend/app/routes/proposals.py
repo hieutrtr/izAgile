@@ -1,6 +1,6 @@
-from fastapi import APIRouter, HTTPException
-from ..schemas.proposal import ProposalCreate, ProposalResponse
-from ..services.proposal import generate_and_store_proposal
+from fastapi import APIRouter, HTTPException, Query
+from ..schemas.proposal import ProposalCreate, ProposalResponse, PaginatedProposalResponse
+from ..services.proposal import generate_and_store_proposal, get_proposals_by_owner
 
 router = APIRouter()
 
@@ -10,8 +10,26 @@ async def create_proposal(proposal_create: ProposalCreate):
         proposal = await generate_and_store_proposal(
             proposal_create.project_name,
             proposal_create.project_requirement,
-            proposal_create.tech_stack
+            proposal_create.tech_stack,
+            proposal_create.owner
         )
         return ProposalResponse(proposal=proposal)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/proposals/owner/{owner}", response_model=PaginatedProposalResponse)
+async def list_proposals_by_owner(
+    owner: str,
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(10, ge=1, le=100, description="Number of items per page")
+):
+    try:
+        proposals, total = await get_proposals_by_owner(owner, page, limit)
+        return PaginatedProposalResponse(
+            proposals=[ProposalResponse(proposal=proposal) for proposal in proposals],
+            total=total,
+            page=page,
+            limit=limit
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

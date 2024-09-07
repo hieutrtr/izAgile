@@ -66,6 +66,7 @@ class Proposal(BaseModel):
 
 class ProposalInDB(BaseModel):
     id: Annotated[PyObjectId, Field(alias="_id", default_factory=PyObjectId)]
+    owner: str
     project_name: str
     project_requirement: str
     tech_stack: str

@@ -4,6 +4,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from ..config import settings
 from ..models.proposal import Proposal, ProposalInDB
 from ..db.mongodb import db
+from typing import List, Tuple
 
 system_template = """You are an expert project manager with deep expertise in Agile methodologies, well-versed in modern technologies such as cloud computing, AI, data management, and software development. Your ability to scope projects ensures the team delivers safe, aligned, and high-quality results that meet the client's requirements. You are proactive, clear, and detail-oriented in ensuring that all client requirements are thoroughly understood and matched to project deliverables.
 
@@ -29,7 +30,7 @@ prompt_template = ChatPromptTemplate.from_messages(
     ]
 )
 
-async def generate_and_store_proposal(project_name: str, project_requirement: str, tech_stack: str) -> ProposalInDB:
+async def generate_and_store_proposal(project_name: str, project_requirement: str, tech_stack: str, owner: str) -> ProposalInDB:
     model = ChatOpenAI(model="gpt-4-turbo-2024-04-09", api_key=settings.OPENAI_API_KEY)
     parser = PydanticOutputParser(pydantic_object=Proposal)
     
@@ -47,10 +48,22 @@ async def generate_and_store_proposal(project_name: str, project_requirement: st
         project_name=project_name,
         project_requirement=project_requirement,
         tech_stack=tech_stack,
+        owner=owner,
         **proposal_data.dict()
     )
     
-    # Store in MongoDB
-    await db.proposals.insert_one(proposal_in_db.dict(by_alias=True))
+    proposal_dict = proposal_in_db.dict(by_alias=True)
+    result = await db.proposals.insert_one(proposal_dict)
+    proposal_dict['_id'] = str(result.inserted_id)
     
-    return proposal_in_db
+    return ProposalInDB(**proposal_dict)
+
+async def get_proposals_by_owner(owner: str, page: int, limit: int) -> Tuple[List[ProposalInDB], int]:
+    skip = (page - 1) * limit
+    cursor = db.proposals.find({"owner": owner}).skip(skip).limit(limit)
+    proposals = []
+    async for document in cursor:
+        proposals.append(ProposalInDB(**document))
+    
+    total = await db.proposals.count_documents({"owner": owner})
+    return proposals, total
