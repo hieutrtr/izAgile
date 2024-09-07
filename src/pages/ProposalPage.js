@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React from "react";
+import { useLocation } from "react-router-dom";
 import FeaturesTab from "../components/proposal/FeaturesTab";
 import PhasesTab from "../components/proposal/PhasesTab";
 import QuestionsTab from "../components/proposal/QuestionsTab";
 
 function ProposalPage() {
-  const [activeTab, setActiveTab] = useState("features");
+  const [activeTab, setActiveTab] = React.useState("features");
+  const location = useLocation();
+  const proposalData = location.state?.proposalData;
 
   const tabs = [
     { id: "features", label: "Features" },
@@ -40,9 +43,9 @@ function ProposalPage() {
           </nav>
         </div>
 
-        {activeTab === "features" && <FeaturesTab />}
-        {activeTab === "phases" && <PhasesTab />}
-        {activeTab === "questions" && <QuestionsTab />}
+        {activeTab === "features" && <FeaturesTab features={proposalData?.features} />}
+        {activeTab === "phases" && <PhasesTab phases={proposalData?.project_phases} />}
+        {activeTab === "questions" && <QuestionsTab questions={proposalData?.client_clarifications} />}
 
         <div className="mt-8 flex justify-end">
           <button
