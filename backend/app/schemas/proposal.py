@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import List
 from ..models.proposal import ProposalInDB
+from ..models.feature import DetailedProposal
 
 class ProposalCreate(BaseModel):
     project_name: str
@@ -16,3 +17,6 @@ class PaginatedProposalResponse(BaseModel):
     total: int
     page: int
     limit: int
+
+class DetailedProposalResponse(BaseModel):
+    proposal: DetailedProposal

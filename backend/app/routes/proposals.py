@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
-from ..schemas.proposal import ProposalCreate, ProposalResponse, PaginatedProposalResponse
+from ..schemas.proposal import ProposalCreate, ProposalResponse, PaginatedProposalResponse, DetailedProposalResponse
 from ..services.proposal import generate_and_store_proposal, get_proposals_by_owner, get_proposal_by_id, get_proposal_by_project_name
+from ..services.feature import generate_detailed_features
 
 router = APIRouter()
 
@@ -51,5 +52,17 @@ async def get_proposal_by_project(project_name: str):
         if proposal is None:
             raise HTTPException(status_code=404, detail="Proposal not found")
         return ProposalResponse(proposal=proposal)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/proposals/{proposal_id}/features", response_model=DetailedProposalResponse)
+async def generate_detailed_proposal(proposal_id: str):
+    try:
+        initial_proposal = await get_proposal_by_id(proposal_id)
+        if initial_proposal is None:
+            raise HTTPException(status_code=404, detail="Proposal not found")
+        
+        detailed_proposal = await generate_detailed_features(initial_proposal.dict())
+        return DetailedProposalResponse(proposal=detailed_proposal)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
