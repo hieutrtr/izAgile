@@ -1,13 +1,54 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import axios from 'axios';
 import FeaturesTab from "../components/proposal/FeaturesTab";
 import PhasesTab from "../components/proposal/PhasesTab";
 import QuestionsTab from "../components/proposal/QuestionsTab";
 
 function ProposalPage() {
-  const [activeTab, setActiveTab] = React.useState("features");
+  const [activeTab, setActiveTab] = useState("features");
+  const [projectName, setProjectName] = useState("");
+  const [proposalData, setProposalData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const location = useLocation();
-  const proposalData = location.state?.proposalData;
+  const initialProposalData = location.state?.proposalData;
+
+  useEffect(() => {
+    // Load the most recently viewed proposal from localStorage
+    const lastViewedProposal = JSON.parse(localStorage.getItem('lastViewedProposal'));
+    if (lastViewedProposal) {
+      setProposalData(lastViewedProposal);
+      setProjectName(lastViewedProposal.project_name);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (initialProposalData) {
+      setProposalData(initialProposalData);
+      setProjectName(initialProposalData.project_name);
+      // Save the initial proposal data as the last viewed proposal
+      localStorage.setItem('lastViewedProposal', JSON.stringify(initialProposalData));
+    }
+  }, [initialProposalData]);
+
+  const handleViewProposal = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_PROJECT_SERVICE_URL}/api/proposals/project/${projectName}`);
+      const newProposalData = response.data.proposal;
+      setProposalData(newProposalData);
+      // Save the new proposal data as the last viewed proposal
+      localStorage.setItem('lastViewedProposal', JSON.stringify(newProposalData));
+    } catch (error) {
+      console.error('Error fetching proposal:', error);
+      setError('Failed to fetch proposal. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const tabs = [
     { id: "features", label: "Features" },
@@ -16,45 +57,79 @@ function ProposalPage() {
   ];
 
   const handleConfirm = () => {
-    // Add your logic here for processing the next step
     console.log("Confirming proposal and proceeding to next step");
   };
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-secondary mb-6">Proposal Information</h1>
+    <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-3xl font-extrabold text-gray-900 text-center mb-8">Proposal Information</h1>
         
-        <div className="mb-4 border-b border-tertiary">
-          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            {tabs.map((tab) => (
+        <div className="bg-white shadow-md rounded-lg overflow-hidden mb-8">
+          <div className="p-6">
+            <div className="flex items-center mb-4">
+              <input
+                type="text"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                placeholder="Enter project name"
+                className="flex-grow px-4 py-2 border border-gray-300 rounded-l-md focus:ring-indigo-500 focus:border-indigo-500"
+              />
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`${
-                  activeTab === tab.id
-                    ? "border-primary text-primary"
-                    : "border-transparent text-quaternary hover:text-secondary hover:border-quaternary"
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                onClick={handleViewProposal}
+                disabled={isLoading}
+                className="bg-indigo-600 text-white px-6 py-2 rounded-r-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
               >
-                {tab.label}
+                {isLoading ? 'Loading...' : 'View Proposal'}
               </button>
-            ))}
-          </nav>
+            </div>
+            
+            {error && (
+              <p className="text-red-600 text-sm mt-2">{error}</p>
+            )}
+          </div>
+
+          {proposalData && (
+            <div>
+              <div className="border-b border-gray-200">
+                <nav className="-mb-px flex" aria-label="Tabs">
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`${
+                        activeTab === tab.id
+                          ? 'border-indigo-500 text-indigo-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex-1 text-center`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </nav>
+              </div>
+
+              <div className="p-6">
+                {activeTab === "features" && <FeaturesTab features={proposalData.features} />}
+                {activeTab === "phases" && <PhasesTab phases={proposalData.project_phases} />}
+                {activeTab === "questions" && <QuestionsTab questions={proposalData.client_clarifications} />}
+              </div>
+
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                <button
+                  onClick={handleConfirm}
+                  className="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                >
+                  Confirm and Proceed
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {activeTab === "features" && <FeaturesTab features={proposalData?.features} />}
-        {activeTab === "phases" && <PhasesTab phases={proposalData?.project_phases} />}
-        {activeTab === "questions" && <QuestionsTab questions={proposalData?.client_clarifications} />}
-
-        <div className="mt-8 flex justify-end">
-          <button
-            onClick={handleConfirm}
-            className="btn-confirm"
-          >
-            Confirm and Proceed
-          </button>
-        </div>
+        {!proposalData && !isLoading && (
+          <p className="text-center text-gray-600">No proposal data available. Please enter a project name and click "View Proposal".</p>
+        )}
       </div>
     </div>
   );
