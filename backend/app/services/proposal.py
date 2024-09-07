@@ -78,3 +78,13 @@ async def get_proposal_by_id(id: str) -> Optional[ProposalInDB]:
     except Exception as e:
         print(f"Error retrieving proposal: {e}")
         return None
+
+async def get_proposal_by_project_name(project_name: str) -> Optional[ProposalInDB]:
+    try:
+        proposal_dict = await db.proposals.find_one({"project_name": project_name})
+        if proposal_dict:
+            return ProposalInDB(**proposal_dict)
+        return None
+    except Exception as e:
+        print(f"Error retrieving proposal: {e}")
+        return None
