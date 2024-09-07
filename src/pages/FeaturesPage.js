@@ -1,30 +1,43 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import PhaseTab from "../components/features/PhaseTab";
 
-const phases = [
-  { id: "phase1", name: "Phase 1" },
-  { id: "phase2", name: "Phase 2" },
-  { id: "phase3", name: "Phase 3" },
-];
-
 function FeaturesPage() {
-  const [activePhase, setActivePhase] = useState(phases[0].id);
+  const [detailedProposal, setDetailedProposal] = useState(null);
+  const [activePhase, setActivePhase] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const storedProposal = JSON.parse(localStorage.getItem('detailedProposal'));
+    if (storedProposal) {
+      setDetailedProposal(storedProposal.proposal);
+      if (storedProposal.phases && storedProposal.phases.length > 0) {
+        setActivePhase(storedProposal.phases[0].name);
+      }
+    } else {
+      navigate('/proposal');
+    }
+  }, [navigate]);
+
+  if (!detailedProposal) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-secondary mb-6">Project Details</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">{detailedProposal.project_name} - Project Details</h1>
         
-        <div className="mb-4 border-b border-tertiary">
+        <div className="mb-4 border-b border-gray-200">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            {phases.map((phase) => (
+            {detailedProposal.phases.map((phase) => (
               <button
-                key={phase.id}
-                onClick={() => setActivePhase(phase.id)}
+                key={phase.name}
+                onClick={() => setActivePhase(phase.name)}
                 className={`${
-                  activePhase === phase.id
-                    ? "border-primary text-primary"
-                    : "border-transparent text-quaternary hover:text-secondary hover:border-quaternary"
+                  activePhase === phase.name
+                    ? "border-indigo-500 text-indigo-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
               >
                 {phase.name}
@@ -33,8 +46,8 @@ function FeaturesPage() {
           </nav>
         </div>
 
-        {phases.map((phase) => (
-          activePhase === phase.id && <PhaseTab key={phase.id} phaseId={phase.id} />
+        {detailedProposal.phases.map((phase) => (
+          activePhase === phase.name && <PhaseTab key={phase.name} phase={phase} />
         ))}
       </div>
     </div>

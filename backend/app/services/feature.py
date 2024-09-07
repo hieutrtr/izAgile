@@ -8,9 +8,9 @@ system_template = """You are an expert project manager and software architect wi
 
 For each project phase, provide the following details:
 1. Features: List and describe the features to be implemented in this phase.
-2. Constraints: Identify any constraints or limitations for this phase.
-3. Team: Specify the human resource requirements (roles and skills needed).
-4. Tasks: Break down the work into specific tasks required to complete the features.
+2. Constraints: Identify any constraints or limitations for the features in this phase, ensuring the scope is well-defined and not overreaching. Focus on what can be realistically delivered within the specific scope of this phase.
+3. Team: Specify the human resource requirements for this phase (roles and skills needed).
+4. Tasks: Break down the work into specific tasks required to complete this phase.
 
 Use the provided initial proposal as a starting point and expand on it with more detail and structure. Ensure that the output follows the format specified in the OUTPUT_INSTRUCTION.
 

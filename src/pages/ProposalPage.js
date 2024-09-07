@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from 'axios';
 import FeaturesTab from "../components/proposal/FeaturesTab";
 import PhasesTab from "../components/proposal/PhasesTab";
@@ -12,10 +12,10 @@ function ProposalPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
   const initialProposalData = location.state?.proposalData;
 
   useEffect(() => {
-    // Load the most recently viewed proposal from localStorage
     const lastViewedProposal = JSON.parse(localStorage.getItem('lastViewedProposal'));
     if (lastViewedProposal) {
       setProposalData(lastViewedProposal);
@@ -27,7 +27,6 @@ function ProposalPage() {
     if (initialProposalData) {
       setProposalData(initialProposalData);
       setProjectName(initialProposalData.project_name);
-      // Save the initial proposal data as the last viewed proposal
       localStorage.setItem('lastViewedProposal', JSON.stringify(initialProposalData));
     }
   }, [initialProposalData]);
@@ -40,11 +39,36 @@ function ProposalPage() {
       const response = await axios.get(`${process.env.REACT_APP_PROJECT_SERVICE_URL}/api/proposals/project/${projectName}`);
       const newProposalData = response.data.proposal;
       setProposalData(newProposalData);
-      // Save the new proposal data as the last viewed proposal
       localStorage.setItem('lastViewedProposal', JSON.stringify(newProposalData));
     } catch (error) {
       console.error('Error fetching proposal:', error);
       setError('Failed to fetch proposal. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (!proposalData || !proposalData._id) {
+      setError('No proposal data available. Please view a proposal first.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await axios.post(`${process.env.REACT_APP_PROJECT_SERVICE_URL}/api/proposals/${proposalData._id}/features`);
+      const detailedProposal = response.data;
+      
+      // Save the detailed proposal to localStorage
+      localStorage.setItem('detailedProposal', JSON.stringify(detailedProposal));
+      
+      // Navigate to the FeaturesPage
+      navigate('/features');
+    } catch (error) {
+      console.error('Error generating detailed proposal:', error);
+      setError('Failed to generate detailed proposal. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -55,10 +79,6 @@ function ProposalPage() {
     { id: "phases", label: "Phases" },
     { id: "questions", label: "Questions" },
   ];
-
-  const handleConfirm = () => {
-    console.log("Confirming proposal and proceeding to next step");
-  };
 
   return (
     <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -118,9 +138,10 @@ function ProposalPage() {
               <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
                 <button
                   onClick={handleConfirm}
-                  className="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  disabled={isLoading}
+                  className="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                 >
-                  Confirm and Proceed
+                  {isLoading ? 'Processing...' : 'Confirm and Proceed'}
                 </button>
               </div>
             </div>
